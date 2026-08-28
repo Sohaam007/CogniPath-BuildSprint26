@@ -1,17 +1,31 @@
-from pydantic import BaseModel, Field
-from typing import Dict, Any
+from pydantic import BaseModel
+from typing import Optional
 
-class Demographics(BaseModel):
-    age: float
-    sex: str
-    education_years: int
+class CognitiveAssessment(BaseModel):
+    mmse_score: float
+    moca_score: float
+    cdr_score: float
 
-class StageData(BaseModel):
-    status: str
-    data: Dict[str, Any] = Field(default_factory=dict)
+class BiomarkerData(BaseModel):
+    abeta_42: float
+    ptau_181: float
+    apoe4_alleles: int
+
+class MRIImaging(BaseModel):
+    hippocampal_volume: float
+    brain_volume: float
+    ventricle_volume: float
+
+class PETImaging(BaseModel):
+    amyloid_suvr: float
+    tau_suvr: float
 
 class PatientRecord(BaseModel):
     patient_id: str
-    demographics: Demographics
-    clinical_stages: Dict[str, StageData]
-    cognipath_triage: Dict[str, Any]
+    age: int
+    gender: str
+    cognitive: CognitiveAssessment
+    biomarkers: BiomarkerData
+    mri: MRIImaging
+    pet: PETImaging
+    risk_score: Optional[float] = None
