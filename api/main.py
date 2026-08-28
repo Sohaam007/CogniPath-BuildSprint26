@@ -8,6 +8,24 @@ from pydantic import BaseModel
 
 app = FastAPI(title="CogniPath API")
 
+
+import json
+# ... existing imports ...
+
+# Setup ML Config path
+CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models", "scoring_config.json"))
+
+def load_ml_weights():
+    try:
+        with open(CONFIG_PATH, "r") as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"Notice: Could not load ML weights ({e}). Using static fallback.")
+        return {"age": 0.5, "moca_score": -2.5, "p_tau181_pg_ml": 3.0, "intercept": 0.0}
+
+# Load weights once at startup
+ML_WEIGHTS = load_ml_weights() 
+
 # Setup C Engine path
 C_ENGINE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "c_engine"))
 lib_name = "libranker.dll" if platform.system() == "Windows" else "libranker.so"
@@ -51,7 +69,13 @@ def rank_patients(payload: Any = Body(...)):
         age = patient.get("demographics", {}).get("age", 65.0)
         
         # Priority score: Higher score = higher clinical urgency
-        score = ((30.0 - float(moca)) * 2.5) + (float(ptau) * 3.0) + ((float(age) - 55.0) * 0.5)
+        # Priority score math using dynamic ML weights
+        score = (
+            (float(age) * ML_WEIGHTS.get("age", 0.5)) +
+            (float(moca) * ML_WEIGHTS.get("moca_score", -2.5)) +
+            (float(ptau) * ML_WEIGHTS.get("p_tau181_pg_ml", 3.0)) +
+            ML_WEIGHTS.get("intercept", 0.0)
+        )
         return score
 
     # Sort cohort descending by urgency score
