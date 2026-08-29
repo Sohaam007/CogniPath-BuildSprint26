@@ -1,5 +1,7 @@
 # CogniPath-BuildSprint26
 # CogniPath 🧠
+**[🎥 Watch the 2-Minute Demo Video Here](https://link-to-your-youtube-or-drive-video.com)**
+
 **AI-Driven Multimodal Triage Engine for Cognitive Health**
 
 CogniPath bridges the critical gap between patient self-reporting and clinical decision-making. By analyzing multimodal inputs—like cognitive assessments and blood biomarkers—CogniPath accelerates early intervention for Alzheimer's and progressive cognitive decline.
@@ -21,6 +23,16 @@ To run this project locally and test the triage flow:
 2. Open the `index.html` file directly in any modern web browser.
 3. Click **Access Patient Intake**, generate a dynamic ID, fill out the mock clinical data, and submit.
 4. From the landing page, enter a mock Doctor ID under the **Clinician Portal** and log in to view the stabilized risk stratification dashboard.
+
+## Interface Showcase
+
+### Landing Page & Patient Intake
+![CogniPath Landing Page](images/Landing-page.png)
+
+![Patient Intake Modal](images/patient-modal.png)
+
+### Clinician Triage Dashboard
+![Clinician Dashboard](images/Dashboard.png)
 
 ---
 *Built for fast, reliable healthcare triage.*
