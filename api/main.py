@@ -7,7 +7,15 @@ from fastapi import FastAPI, Body
 from pydantic import BaseModel
 
 app = FastAPI(title="CogniPath API")
+from fastapi.middleware.cors import CORSMiddleware
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 import json
 # ... existing imports ...
@@ -47,6 +55,18 @@ else:
 @app.get("/health")
 def health_check():
     return {"status": "ok", "engine": "C (binary)" if c_lib else "Python (native)"}
+
+@app.get("/api/v1/rank")
+def get_mock_worklist():
+    """Mock endpoint to serve frontend development"""
+    return [
+        {"id": "PT-001", "name": "Arthur Dent", "age": 72, "risk_score": 92.5, "last_visit": "2026-08-15", "key_finding": "Elevated p-tau181 (5.2 pg/mL), MoCA 18"},
+        {"id": "PT-002", "name": "Ford Prefect", "age": 68, "risk_score": 85.0, "last_visit": "2026-08-20", "key_finding": "Rapid decline in semantic fluency"},
+        {"id": "PT-003", "name": "Zaphod Beeblebrox", "age": 81, "risk_score": 82.1, "last_visit": "2026-08-10", "key_finding": "MoCA dropped 4 points in 6 months"},
+        {"id": "PT-004", "name": "Trillian Astra", "age": 65, "risk_score": 65.3, "last_visit": "2026-07-22", "key_finding": "Family history, mild MCI"},
+        {"id": "PT-005", "name": "Slartibartfast", "age": 79, "risk_score": 58.7, "last_visit": "2026-08-01", "key_finding": "Stable cognitive profile"},
+        {"id": "PT-006", "name": "Marvin", "age": 75, "risk_score": 42.0, "last_visit": "2026-08-25", "key_finding": "Depression screening indicated, cognition stable"}
+    ]
 
 # Explicitly tell FastAPI to look in the request Body
 @app.post("/api/v1/rank")
@@ -94,4 +114,27 @@ def rank_patients(payload: Any = Body(...)):
         "engine": "C-libranker" if c_lib else "Python-fallback",
         "total_ranked": len(ranked),
         "ranked_patients": ranked
+    }
+
+class WebhookPayload(BaseModel):
+    patient_id: str
+    lab_report_text: str
+
+@app.post("/api/biomarker/extract")
+def extract_biomarker(payload: WebhookPayload):
+    """Stub endpoint to simulate extracting p-tau181 from lab reports"""
+    # In a real system, this would use NLP to extract the value from payload.lab_report_text
+    print(f"Received webhook for patient: {payload.patient_id}")
+    
+    # Simulate extraction (mocking a value)
+    extracted_value = 4.2 
+    
+    return {
+        "status": "success",
+        "patient_id": payload.patient_id,
+        "extracted_biomarkers": {
+            "p_tau181_pg_ml": extracted_value
+        },
+        "confidence": 0.95,
+        "source": "simulated_extraction"
     }

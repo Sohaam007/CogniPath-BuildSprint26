@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CogniPath - Clinician Prioritized Worklist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .risk-high { @apply bg-red-100 border-l-4 border-red-500; }
+        .risk-medium { @apply bg-yellow-100 border-l-4 border-yellow-500; }
+        .risk-low { @apply bg-green-100 border-l-4 border-green-500; }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <header class="mb-8 flex justify-between items-center bg-white p-6 rounded-lg shadow-sm">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">CogniPath</h1>
+                <p class="text-gray-600 mt-1">Clinician Prioritized Worklist</p>
+            </div>
+            <div class="text-sm font-medium px-4 py-2 bg-blue-100 text-blue-800 rounded-full">
+                Team Code Blue
+            </div>
+        </header>
+
+        <main>
+            <section class="mb-10">
+                <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Top 5 Highest-Risk Patients (Action Required)</h2>
+                <div id="top-patients-container" class="space-y-4">
+                    <!-- Top 5 patients will be injected here -->
+                    <div class="animate-pulse flex space-x-4 bg-white p-6 rounded-lg shadow-sm">
+                        <div class="flex-1 space-y-4 py-1">
+                            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                            <div class="space-y-2">
+                                <div class="h-4 bg-gray-200 rounded"></div>
+                                <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h2 class="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">Full Worklist</h2>
+                <div class="bg-white shadow-sm rounded-lg overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient ID</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Score</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="all-patients-container" class="bg-white divide-y divide-gray-200">
+                            <!-- All patients will be injected here -->
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
+                                    Loading patient data...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:8000/api/v1/rank';
+        
+        async function fetchPatientData() {
+            try {
+                // In a real scenario, you might need to handle CORS if frontend is served from a different port
+                const response = await fetch(API_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                renderWorklist(data);
+            } catch (error) {
+                console.error("Could not fetch patient data:", error);
+                showError("Failed to load patient data. Please ensure the backend is running.");
+            }
+        }
+
+        function getRiskClass(score) {
+            if (score >= 80) return 'risk-high';
+            if (score >= 50) return 'risk-medium';
+            return 'risk-low';
+        }
+
+        function getRiskBadge(score) {
+            if (score >= 80) return '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">Critical</span>';
+            if (score >= 50) return '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">Review</span>';
+            return '<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Stable</span>';
+        }
+
+        function renderWorklist(patients) {
+            // Sort by risk score descending
+            const sortedPatients = [...patients].sort((a, b) => b.risk_score - a.risk_score);
+            
+            const topPatients = sortedPatients.slice(0, 5);
+            const allPatients = sortedPatients;
+
+            // Render Top 5
+            const topContainer = document.getElementById('top-patients-container');
+            topContainer.innerHTML = topPatients.map(patient => `
+                <div class="bg-white p-5 rounded-lg shadow-sm flex items-center justify-between ${getRiskClass(patient.risk_score)}">
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <h3 class="text-lg font-bold text-gray-900">${patient.name || `Patient ${patient.id}`}</h3>
+                            ${getRiskBadge(patient.risk_score)}
+                        </div>
+                        <div class="text-sm text-gray-600 grid grid-cols-2 gap-x-8 gap-y-1">
+                            <p><strong>ID:</strong> ${patient.id}</p>
+                            <p><strong>Age:</strong> ${patient.age || 'N/A'}</p>
+                            <p><strong>Last Visit:</strong> ${patient.last_visit || 'Unknown'}</p>
+                            ${patient.key_finding ? `<p class="col-span-2 text-red-600"><strong>Key Finding:</strong> ${patient.key_finding}</p>` : ''}
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-3xl font-black ${patient.risk_score >= 80 ? 'text-red-600' : 'text-gray-800'}">
+                            ${patient.risk_score}
+                        </div>
+                        <div class="text-xs text-gray-500 uppercase tracking-wide mt-1">Risk Score</div>
+                        <button class="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-4 rounded transition-colors">
+                            Review Chart
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            // Render All Patients Table
+            const allContainer = document.getElementById('all-patients-container');
+            allContainer.innerHTML = allPatients.map(patient => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${patient.id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${patient.name || 'Unknown'}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-semibold">${patient.risk_score}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        ${getRiskBadge(patient.risk_score)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="#" class="text-indigo-600 hover:text-indigo-900">View</a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function showError(message) {
+            const container = document.getElementById('top-patients-container');
+            container.innerHTML = `
+                <div class="bg-red-50 border-l-4 border-red-400 p-4 rounded">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-700">${message}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('all-patients-container').innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-4 whitespace-nowrap text-center text-sm text-red-500">
+                        Failed to load data
+                    </td>
+                </tr>
+            `;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', fetchPatientData);
+    </script>
+</body>
+</html>
