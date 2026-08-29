@@ -1,9 +1,16 @@
 import json
+import os
 import random
 import uuid
 from typing import List
 
+sys_path = os.path.dirname(os.path.abspath(__file__))
+import sys
+if sys_path not in sys.path:
+    sys.path.insert(0, sys_path)
+
 from schemas import PatientRecord, CognitiveAssessment, BiomarkerData, MRIImaging, PETImaging
+
 
 def generate_patient() -> PatientRecord:
     # Generate some realistic-looking distributions
@@ -70,10 +77,12 @@ def generate_patient() -> PatientRecord:
 def main():
     patients = [generate_patient().model_dump() for _ in range(500)]
     
-    with open("mock_cohort.json", "w") as f:
+    output_path = os.path.join(sys_path, "mock_cohort.json")
+    with open(output_path, "w") as f:
         json.dump(patients, f, indent=2)
         
     print(f"Successfully generated {len(patients)} patient records in mock_cohort.json")
+
 
 if __name__ == "__main__":
     main()

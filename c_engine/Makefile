@@ -2,7 +2,12 @@ CC = gcc
 CFLAGS = -Wall -Wextra -fPIC -O3
 LDFLAGS = -shared
 
-TARGET = libranker.dll
+ifeq ($(OS),Windows_NT)
+    TARGET = libranker.dll
+else
+    TARGET = libranker.so
+endif
+
 SRC = ranker.c
 OBJ = $(SRC:.c=.o)
 
@@ -15,6 +20,6 @@ $(TARGET): $(OBJ)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -f $(OBJ) $(TARGET) libranker.dll libranker.so
 
 .PHONY: all clean
