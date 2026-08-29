@@ -54,7 +54,7 @@
                     <h2 class="text-2xl font-bold mb-2 text-slate-900 dark:text-white">Patient Portal</h2>
                     <p class="text-sm text-slate-600 dark:text-slate-300 mb-4">Securely self-report cognitive symptoms and demographics for remote provider review.</p>
                 </div>
-                <button type="button" onclick="const m = document.getElementById('patient-portal-modal'); if(m){ document.body.appendChild(m); m.classList.remove('hidden'); m.style.setProperty('display', 'flex', 'important'); }" class="w-full bg-purple-600 hover:bg-purple-500 text-white p-3 rounded-lg font-bold transition-colors shadow-md">Access Patient Intake</button>
+                <button type="button" onclick="const m = document.getElementById('patient-portal-modal'); if(m){ document.body.appendChild(m); if(typeof togglePatientPortalModal === 'function'){ togglePatientPortalModal(true); }else{ const newId = 'PT_LIVE_' + Math.floor(1000 + Math.random() * 9000); const idEl = document.getElementById('portal-id'); if(idEl) idEl.value = newId; m.classList.remove('hidden'); } m.style.setProperty('display', 'flex', 'important'); }" class="w-full bg-purple-600 hover:bg-purple-500 text-white p-3 rounded-lg font-bold transition-colors shadow-md">Access Patient Intake</button>
             </div>
         </div>
         <div class="w-full max-w-5xl mt-12 grid grid-cols-1 md:grid-cols-3 gap-6 text-left z-10 pb-12">
