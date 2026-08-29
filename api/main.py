@@ -4,6 +4,7 @@ import ctypes
 import platform
 import json
 import requests
+import time
 from typing import List, Any, Dict
 from fastapi import FastAPI, Body, UploadFile, File, Form
 from fastapi.responses import FileResponse
@@ -25,56 +26,73 @@ class SingleAssessInput(BaseModel):
     cognitive_score: float
     ptau: float
 
+# Setup C Engine path
 C_ENGINE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "c_engine"))
-lib_name = "libranker.dll" if platform.system() == "Windows" else "libranker.so"
-lib_path = os.path.join(C_ENGINE_DIR, lib_name)
+
+# Define C struct in Python
+class PatientRecord(ctypes.Structure):
+    _fields_ = [
+        ("id", ctypes.c_int),
+        ("age", ctypes.c_float),
+        ("cognitive_score", ctypes.c_float),
+        ("ptau", ctypes.c_float),
+        ("final_score", ctypes.c_float)
+    ]
 
 c_lib = None
-if os.path.exists(lib_path):
-    try:
-        if sys.platform == "win32" and hasattr(os, "add_dll_directory"):
-            os.add_dll_directory(C_ENGINE_DIR)
-        c_lib = ctypes.CDLL(lib_path)
-    except Exception:
-        pass
+def load_c_library():
+    global c_lib
+    possible_names = ["ranker.so", "libranker.so", "libranker.dll"]
+    for name in possible_names:
+        path = os.path.join(C_ENGINE_DIR, name)
+        if os.path.exists(path):
+            try:
+                if sys.platform == "win32" and hasattr(os, "add_dll_directory"):
+                    os.add_dll_directory(C_ENGINE_DIR)
+                lib = ctypes.CDLL(path)
+                lib.rank_patients.argtypes = [
+                    ctypes.POINTER(PatientRecord),
+                    ctypes.c_int,
+                    ctypes.c_float,
+                    ctypes.c_float,
+                    ctypes.c_float
+                ]
+                lib.rank_patients.restype = None
+                c_lib = lib
+                print(f"C engine successfully loaded from {path}")
+                return
+            except Exception as err:
+                print(f"Notice: C DLL load failed for {path}: {err}")
+    c_lib = None
 
-CONFIG_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "models", "scoring_config.json"))
+load_c_library()
 
-def load_ml_weights():
-    try:
-        with open(CONFIG_PATH, "r") as f:
-            return json.load(f)
-    except Exception:
-        return {"age": 0.05, "moca_score": -0.15, "p_tau181_pg_ml": 0.8, "intercept": 0.0}
-
-ML_WEIGHTS = load_ml_weights()
-
-def compute_patient_metrics(patient: Dict[str, Any]) -> Dict[str, Any]:
+def compute_patient_metrics(patient: Dict[str, Any], w_age: float = 0.5, w_moca: float = 2.5, w_ptau: float = 3.0) -> Dict[str, Any]:
     stages = patient.get("clinical_stages", {})
-    moca = stages.get("1_cognitive", {}).get("data", {}).get("moca_score", 30)
-    ptau = stages.get("2_blood_biomarker", {}).get("data", {}).get("p_tau181_pg_ml", 0.0)
-    age = patient.get("demographics", {}).get("age", 65.0)
+    moca_data = stages.get("1_cognitive", {}).get("data", {})
+    moca = float(moca_data.get("moca_score", patient.get("cognitive_score", patient.get("moca_score", 30.0))))
+    
+    tau_data = stages.get("2_blood_biomarker", {}).get("data", {})
+    ptau = float(tau_data.get("p_tau181_pg_ml", tau_data.get("ptau_level", patient.get("ptau", 0.0))))
+    
+    age = float(patient.get("demographics", {}).get("age", patient.get("age", 65.0)))
 
-    w_age = float(ML_WEIGHTS.get("age", 0.05))
-    w_moca = abs(float(ML_WEIGHTS.get("moca_score", -0.15)))
-    w_ptau = float(ML_WEIGHTS.get("p_tau181_pg_ml", 0.8))
+    score = round(((30.0 - moca) * w_moca) + (ptau * w_ptau) + ((age - 55.0) * w_age), 2)
 
-    c_age = max(0.0, (float(age) - 50.0) * w_age)
-    c_cog = max(0.0, (30.0 - float(moca)) * w_moca)
-    c_bio = max(0.0, float(ptau) * w_ptau)
+    w_age_contrib = max(0.01, (age - 55.0) * w_age)
+    w_cog_contrib = max(0.01, (30.0 - moca) * w_moca)
+    w_bio_contrib = max(0.01, ptau * w_ptau)
+    sum_w = w_age_contrib + w_cog_contrib + w_bio_contrib
 
-    total_raw = c_age + c_cog + c_bio + 0.001
-    score = round(total_raw, 2)
+    pct_age = round((w_age_contrib / sum_w) * 100, 1)
+    pct_cog = round((w_cog_contrib / sum_w) * 100, 1)
+    pct_bio = round((w_bio_contrib / sum_w) * 100, 1)
 
-    pct_bio = round((c_bio / total_raw) * 100, 1)
-    pct_cog = round((c_cog / total_raw) * 100, 1)
-    pct_age = round((c_age / total_raw) * 100, 1)
-
-    if score >= 3.5:
+    if score >= 15.0:
         tier = "HIGH"
         action = "PRIORITY_MRI_PET_SLOT"
-        tags = ["Elevated p-tau181", "Sub-24 Cognitive Score", "Immediate Review"]
-    elif score >= 2.0:
+        tags = ["Elevated Biomarkers", "Immediate Specialist Consult"]
+    elif score >= 5.0:
         tier = "MODERATE"
         action = "SCHEDULE_SECONDARY_SCREEN"
         tags = ["Borderline Cognitive Signals", "Monitor Trajectory"]
@@ -99,7 +117,9 @@ def compute_patient_metrics(patient: Dict[str, Any]) -> Dict[str, Any]:
 @app.get("/")
 def serve_frontend():
     frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "index.html"))
-    return FileResponse(frontend_path)
+    if os.path.exists(frontend_path):
+        return FileResponse(frontend_path)
+    return {"status": "ok", "message": "CogniPath API Running"}
 
 @app.get("/health")
 def health_check():
@@ -149,24 +169,81 @@ def assess_single_patient(inp: SingleAssessInput):
 
 @app.post("/api/v1/rank")
 def rank_patients(payload: Any = Body(...)):
-    cohort = payload if isinstance(payload, list) else payload.get("patients", [])
-    
-    for patient in cohort:
-        patient["cognipath_triage"] = compute_patient_metrics(patient)
+    if isinstance(payload, dict):
+        cohort = payload.get("patients", [])
+        weights = payload.get("weights", {})
+        w_age = float(payload.get("w_age", weights.get("w_age", 0.5)))
+        w_moca = float(payload.get("w_moca", weights.get("w_moca", 2.5)))
+        w_ptau = float(payload.get("w_ptau", weights.get("w_ptau", 3.0)))
+    else:
+        cohort = payload if isinstance(payload, list) else []
+        w_age = 0.5
+        w_moca = 2.5
+        w_ptau = 3.0
 
-    ranked = sorted(cohort, key=lambda p: p["cognipath_triage"]["risk_score"], reverse=True)
-    
-    for rank_idx, patient in enumerate(ranked, start=1):
+    engine_used = "Python-fallback"
+    ranked = None
+    c_execution_time_ms = 0.0
+
+    if c_lib is not None and len(cohort) > 0:
+        try:
+            records_array = (PatientRecord * len(cohort))()
+            for idx, patient in enumerate(cohort):
+                stages = patient.get("clinical_stages", {})
+                moca_data = stages.get("1_cognitive", {}).get("data", {})
+                moca = float(moca_data.get("moca_score", patient.get("cognitive_score", patient.get("moca_score", 30.0))))
+                
+                tau_data = stages.get("2_blood_biomarker", {}).get("data", {})
+                ptau = float(tau_data.get("p_tau181_pg_ml", tau_data.get("ptau_level", patient.get("ptau", 0.0))))
+                
+                age = float(patient.get("demographics", {}).get("age", patient.get("age", 65.0)))
+
+                records_array[idx] = PatientRecord(
+                    id=idx,
+                    age=age,
+                    cognitive_score=moca,
+                    ptau=ptau,
+                    final_score=0.0
+                )
+
+            start_c = time.perf_counter()
+            c_lib.rank_patients(records_array, len(cohort), ctypes.c_float(w_age), ctypes.c_float(w_moca), ctypes.c_float(w_ptau))
+            c_execution_time_ms = (time.perf_counter() - start_c) * 1000
+            
+            ranked = []
+            for rec in records_array:
+                orig_patient = cohort[rec.id]
+                ranked.append((orig_patient, rec.final_score))
+            
+            engine_used = "C-libranker"
+        except Exception as err:
+            print(f"C execution failed ({err}), falling back to Python native sort.")
+            ranked = None
+
+    if ranked is None:
+        def py_priority(p):
+            metrics = compute_patient_metrics(p, w_age, w_moca, w_ptau)
+            return metrics["risk_score"]
+        ranked = [(p, py_priority(p)) for p in sorted(cohort, key=py_priority, reverse=True)]
+        engine_used = "Python-fallback"
+
+    result_patients = []
+    for rank_idx, item in enumerate(ranked, start=1):
+        patient, score = item if isinstance(item, tuple) else (item, 0.0)
+        patient["cognipath_triage"] = compute_patient_metrics(patient, w_age, w_moca, w_ptau)
         patient["cognipath_triage"]["triage_rank"] = rank_idx
+        patient["cognipath_triage"]["engine_used"] = engine_used
+        result_patients.append(patient)
 
     return {
         "status": "success",
-        "engine": "C-libranker" if c_lib else "Python-fallback",
-        "total_ranked": len(ranked),
-        "high_priority_count": sum(1 for p in ranked if p["cognipath_triage"]["risk_tier"] == "HIGH"),
-        "moderate_priority_count": sum(1 for p in ranked if p["cognipath_triage"]["risk_tier"] == "MODERATE"),
-        "low_priority_count": sum(1 for p in ranked if p["cognipath_triage"]["risk_tier"] == "LOW"),
-        "ranked_patients": ranked
+        "engine": engine_used,
+        "c_core_execution_time_ms": round(c_execution_time_ms, 4),
+        "total_ranked": len(result_patients),
+        "high_priority_count": sum(1 for p in result_patients if p["cognipath_triage"]["risk_tier"] == "HIGH"),
+        "moderate_priority_count": sum(1 for p in result_patients if p["cognipath_triage"]["risk_tier"] == "MODERATE"),
+        "low_priority_count": sum(1 for p in result_patients if p["cognipath_triage"]["risk_tier"] == "LOW"),
+        "ranked_patients": result_patients
     }
 
 @app.post("/api/v1/parse-report")

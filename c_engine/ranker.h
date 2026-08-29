@@ -2,12 +2,13 @@
 #define RANKER_H
 
 typedef struct {
-    char patient_id[32];
-    double risk_score;
-} PatientScore;
+    int id;
+    float age;
+    float cognitive_score;
+    float ptau;
+    float final_score;
+} PatientRecord;
 
-// Sorts an array of PatientScore structs in descending order of risk_score
-// returns 0 on success, non-zero on failure
-int rank_patients(PatientScore* patients, int count);
+void rank_patients(PatientRecord* records, int count, float w_age, float w_moca, float w_ptau);
 
 #endif // RANKER_H
