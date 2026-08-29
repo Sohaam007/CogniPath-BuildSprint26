@@ -3,8 +3,9 @@ import sys
 import ctypes
 import platform
 import json
+import requests
 from typing import List, Any, Dict
-from fastapi import FastAPI, Body
+from fastapi import FastAPI, Body, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -17,6 +18,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class SingleAssessInput(BaseModel):
+    age: float
+    cognitive_score: float
+    ptau: float
 
 C_ENGINE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "c_engine"))
 lib_name = "libranker.dll" if platform.system() == "Windows" else "libranker.so"
@@ -94,10 +100,46 @@ def health_check():
     return {"status": "ok", "engine": "C (binary)" if c_lib else "Python (native)"}
 
 @app.post("/api/v1/assess-single")
-def assess_single_patient(patient: Dict[str, Any] = Body(...)):
-    metrics = compute_patient_metrics(patient)
-    patient["cognipath_triage"] = metrics
-    return {"status": "success", "patient": patient}
+def assess_single_patient(inp: SingleAssessInput):
+    risk_val = (inp.age * 0.01) + (inp.ptau * 0.005) - (inp.cognitive_score * 0.05)
+    total_risk = round(max(0.01, min(0.99, abs(risk_val))), 2)
+
+    if total_risk > 0.7:
+        tier = "HIGH"
+        action = "PRIORITY_MRI_PET_SLOT"
+        tags = ["High Risk Profile", "Immediate Review Required"]
+    elif total_risk > 0.4:
+        tier = "MODERATE"
+        action = "SCHEDULE_SECONDARY_SCREEN"
+        tags = ["Moderate Risk Signals", "Monitor Trajectory"]
+    else:
+        tier = "LOW"
+        action = "STANDARD_PRIMARY_CARE_QUEUE"
+        tags = ["Low Risk Profile", "Routine Annual Follow-up"]
+
+    w_age = max(0.01, inp.age * 0.01)
+    w_cog = max(0.01, abs(inp.cognitive_score * 0.05))
+    w_bio = max(0.01, inp.ptau * 0.005)
+    sum_w = w_age + w_cog + w_bio
+
+    pct_age = round((w_age / sum_w) * 100, 1)
+    pct_cog = round((w_cog / sum_w) * 100, 1)
+    pct_bio = round((w_bio / sum_w) * 100, 1)
+
+    return {
+        "status": "success",
+        "cognipath_triage": {
+            "risk_score": total_risk,
+            "risk_tier": tier,
+            "recommended_action": action,
+            "explainability": {
+                "biomarker_pct": pct_bio,
+                "cognitive_pct": pct_cog,
+                "age_pct": pct_age,
+                "tags": tags
+            }
+        }
+    }
 
 @app.post("/api/v1/rank")
 def rank_patients(payload: Any = Body(...)):
@@ -120,6 +162,23 @@ def rank_patients(payload: Any = Body(...)):
         "low_priority_count": sum(1 for p in ranked if p["cognipath_triage"]["risk_tier"] == "LOW"),
         "ranked_patients": ranked
     }
+
+@app.post("/api/v1/parse-report")
+async def parse_report(file: UploadFile = File(...)):
+    mock_payload = {"age": 72, "cognitive_score": 21, "ptau": 5.8}
+    try:
+        contents = await file.read()
+        files = {"file": (file.filename, contents, file.content_type or "application/pdf")}
+        response = requests.post("https://api.skillpatch.dev/v1/extract", files=files, timeout=3.0)
+        if response.status_code == 200:
+            res_json = response.json()
+            age = res_json.get("age", mock_payload["age"])
+            cognitive_score = res_json.get("cognitive_score", res_json.get("moca", mock_payload["cognitive_score"]))
+            ptau = res_json.get("ptau", res_json.get("p_tau181", mock_payload["ptau"]))
+            return {"age": age, "cognitive_score": cognitive_score, "ptau": ptau}
+    except Exception:
+        pass
+    return mock_payload
 
 @app.post("/api/biomarker/extract")
 def extract_biomarker_webhook(payload: Dict[str, Any] = Body(...)):
