@@ -6,6 +6,7 @@ import json
 import requests
 from typing import List, Any, Dict
 from fastapi import FastAPI, Body, UploadFile, File, Form
+from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -95,6 +96,11 @@ def compute_patient_metrics(patient: Dict[str, Any]) -> Dict[str, Any]:
         "engine_used": "C-libranker" if c_lib else "Python-fallback"
     }
 
+@app.get("/")
+def serve_frontend():
+    frontend_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "index.html"))
+    return FileResponse(frontend_path)
+
 @app.get("/health")
 def health_check():
     return {"status": "ok", "engine": "C (binary)" if c_lib else "Python (native)"}
@@ -165,24 +171,22 @@ def rank_patients(payload: Any = Body(...)):
 
 @app.post("/api/v1/parse-report")
 async def parse_report(file: UploadFile = File(...)):
-    mock_payload = {"age": 72, "cognitive_score": 21, "ptau": 5.8}
+    files = {'file': (file.filename, file.file, file.content_type)}
+    headers = {'X-API-Key': os.getenv('SKILLPATCH_API_KEY')}
+    
     try:
-        contents = await file.read()
-        files = {"file": (file.filename, contents, file.content_type or "application/pdf")}
-        headers = {}
-        api_key = os.getenv("SKILLPATCH_API_KEY")
-        if api_key:
-            headers["Authorization"] = f"Bearer {api_key}"
-        response = requests.post("https://api.skillpatch.dev/v1/extract", files=files, headers=headers, timeout=3.0)
-        if response.status_code == 200:
-            res_json = response.json()
-            age = res_json.get("age", mock_payload["age"])
-            cognitive_score = res_json.get("cognitive_score", res_json.get("moca", mock_payload["cognitive_score"]))
-            ptau = res_json.get("ptau", res_json.get("p_tau181", mock_payload["ptau"]))
-            return {"age": age, "cognitive_score": cognitive_score, "ptau": ptau}
-    except Exception:
-        pass
-    return mock_payload
+        response = requests.post("https://api.skillpatch.dev/v1/extract", files=files, headers=headers)
+        response.raise_for_status()
+        res_json = response.json()
+        return {
+            "age": res_json.get("age"),
+            "cognitive_score": res_json.get("cognitive_score"),
+            "ptau": res_json.get("ptau")
+        }
+    except requests.exceptions.ConnectionError:
+        return {'age': 75, 'cognitive_score': 21, 'ptau': 4.2}
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.post("/api/biomarker/extract")
 def extract_biomarker_webhook(payload: Dict[str, Any] = Body(...)):
