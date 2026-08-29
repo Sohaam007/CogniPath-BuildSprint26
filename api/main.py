@@ -169,7 +169,11 @@ async def parse_report(file: UploadFile = File(...)):
     try:
         contents = await file.read()
         files = {"file": (file.filename, contents, file.content_type or "application/pdf")}
-        response = requests.post("https://api.skillpatch.dev/v1/extract", files=files, timeout=3.0)
+        headers = {}
+        api_key = os.getenv("SKILLPATCH_API_KEY")
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+        response = requests.post("https://api.skillpatch.dev/v1/extract", files=files, headers=headers, timeout=3.0)
         if response.status_code == 200:
             res_json = response.json()
             age = res_json.get("age", mock_payload["age"])
