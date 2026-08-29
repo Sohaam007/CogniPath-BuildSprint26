@@ -1,6 +1,7 @@
 import os
 import sys
 import unittest
+import ctypes
 from unittest.mock import patch
 
 # Ensure api directory is in import path

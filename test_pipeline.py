@@ -39,11 +39,8 @@ def main():
     
     patients_payload = []
     for p in patients_data:
-        # Assuming risk_score is at the root level as defined in the generate script
-        patients_payload.append({
-            "patient_id": p["patient_id"],
-            "risk_score": p["risk_score"]
-        })
+        # Pass full patient object structure so API can calculate exact scores across metrics
+        patients_payload.append(p)
 
     print(f"Sending {len(patients_payload)} patients to the C Engine via FastAPI...")
     
@@ -58,19 +55,28 @@ def main():
     result_data = response.json()
     ranked_patients = result_data.get("ranked_patients", [])
     
-    print(f"Ranking completed in {(end_time - start_time) * 1000:.2f} ms")
-    print(f"Received {len(ranked_patients)} ranked patients.")
-    print("\nTop 5 Highest Risk Patients:")
-    print("-" * 40)
-    for i, p in enumerate(ranked_patients[:5]):
-        print(f"{i+1}. {p['patient_id']} - Score: {p['risk_score']:.2f}")
+    print(f"\n==========================================================================")
+    print(f"RANKING COMPLETED IN {(end_time - start_time) * 1000:.2f} ms")
+    print(f"ENGINE: {result_data.get('engine')} (C Core Time: {result_data.get('c_core_execution_time_ms', 0)} ms)")
+    print(f"TOTAL PATIENTS PROCESSESSED: {len(ranked_patients)}")
+    print(f"==========================================================================\n")
 
-    print("\nBottom 5 Lowest Risk Patients:")
-    print("-" * 40)
-    for i, p in enumerate(ranked_patients[-5:]):
-        # We use standard formatting to show their position relative to the end
-        rank_idx = len(ranked_patients) - 5 + i + 1
-        print(f"{rank_idx}. {p['patient_id']} - Score: {p['risk_score']:.2f}")
+    for i, p in enumerate(ranked_patients, start=1):
+        triage = p.get("cognipath_triage", {})
+        score = triage.get("risk_score", p.get("risk_score", 0.0))
+        tier = triage.get("risk_tier", "HIGH" if score >= 15 else "MODERATE" if score >= 5 else "LOW")
+        
+        # Mark Top 10 High Risk distinctly, Moderate separately, Low separately
+        if i <= 10:
+            status = "*** [TOP 10 HIGH RISK - CRITICAL ATTENTION] ***"
+        elif tier == "HIGH" or score >= 15.0:
+            status = "[HIGH RISK]"
+        elif tier == "MODERATE" or score >= 5.0:
+            status = "[MODERATE RISK]"
+        else:
+            status = "[LOW RISK]"
+            
+        print(f"Rank #{i:<3} | Patient: {p['patient_id']} | Risk Score: {score:<6.2f} | Status: {status}")
 
 if __name__ == "__main__":
     main()

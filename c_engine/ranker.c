@@ -5,7 +5,6 @@
 #include <omp.h>
 #endif
 
-// Comparison function for qsort to sort in descending order of final_score
 static int compare_records(const void* a, const void* b) {
     const PatientRecord* p1 = (const PatientRecord*)a;
     const PatientRecord* p2 = (const PatientRecord*)b;

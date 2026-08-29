@@ -70,14 +70,18 @@ load_c_library()
 def compute_patient_metrics(patient: Dict[str, Any], w_age: float = 0.5, w_moca: float = 2.5, w_ptau: float = 3.0) -> Dict[str, Any]:
     stages = patient.get("clinical_stages", {})
     moca_data = stages.get("1_cognitive", {}).get("data", {})
-    moca = float(moca_data.get("moca_score", patient.get("cognitive_score", patient.get("moca_score", 30.0))))
+    moca = float(moca_data.get("moca_score", patient.get("cognitive", {}).get("moca_score", patient.get("cognitive_score", patient.get("moca_score", 30.0)))))
     
     tau_data = stages.get("2_blood_biomarker", {}).get("data", {})
-    ptau = float(tau_data.get("p_tau181_pg_ml", tau_data.get("ptau_level", patient.get("ptau", 0.0))))
+    ptau = float(tau_data.get("p_tau181_pg_ml", patient.get("biomarkers", {}).get("ptau_181", patient.get("ptau_level", patient.get("ptau", 0.0)))))
     
     age = float(patient.get("demographics", {}).get("age", patient.get("age", 65.0)))
+    apoe4 = int(patient.get("biomarkers", {}).get("apoe4_alleles", 0))
 
-    score = round(((30.0 - moca) * w_moca) + (ptau * w_ptau) + ((age - 55.0) * w_age), 2)
+    # Calculate multi-factorial risk score including APOE4 genetic multiplier
+    apoe_multiplier = 1.0 + (apoe4 * 0.25)  # +25% risk weight per APOE4 allele
+    base_score = ((30.0 - moca) * w_moca) + (ptau * w_ptau) + ((age - 55.0) * w_age)
+    score = round(base_score * apoe_multiplier, 2)
 
     w_age_contrib = max(0.01, (age - 55.0) * w_age)
     w_cog_contrib = max(0.01, (30.0 - moca) * w_moca)
@@ -88,18 +92,23 @@ def compute_patient_metrics(patient: Dict[str, Any], w_age: float = 0.5, w_moca:
     pct_cog = round((w_cog_contrib / sum_w) * 100, 1)
     pct_bio = round((w_bio_contrib / sum_w) * 100, 1)
 
-    if score >= 15.0:
-        tier = "HIGH"
-        action = "PRIORITY_MRI_PET_SLOT"
-        tags = ["Elevated Biomarkers", "Immediate Specialist Consult"]
-    elif score >= 5.0:
-        tier = "MODERATE"
-        action = "SCHEDULE_SECONDARY_SCREEN"
-        tags = ["Borderline Cognitive Signals", "Monitor Trajectory"]
+    # 4-Tier Medical Triage Classification
+    if score >= 120.0:
+        tier = "CRITICAL_TIER1"
+        action = "URGENT_NEUROLOGY_MRI_ICU_QUEUE"
+        tags = ["Severe Cognitive Decline", "High Biomarker Burden", "Genetic Risk Factor"]
+    elif score >= 60.0:
+        tier = "HIGH_PRIORITY"
+        action = "SCHEDULE_PET_SCAN_AND_CSF"
+        tags = ["Elevated Biomarkers", "Specialist Consult Needed"]
+    elif score >= 25.0:
+        tier = "MODERATE_MONITOR"
+        action = "6_MONTH_COGNITIVE_REASSESSMENT"
+        tags = ["Borderline Cognitive Signals", "Routine Trajectory Track"]
     else:
-        tier = "LOW"
-        action = "STANDARD_PRIMARY_CARE_QUEUE"
-        tags = ["Normative Range", "Routine Annual Follow-up"]
+        tier = "LOW_STABLE"
+        action = "ANNUAL_PRIMARY_CARE_CHECKUP"
+        tags = ["Normative Range", "Low Risk Profile"]
 
     return {
         "risk_score": score,
@@ -191,10 +200,10 @@ def rank_patients(payload: Any = Body(...)):
             for idx, patient in enumerate(cohort):
                 stages = patient.get("clinical_stages", {})
                 moca_data = stages.get("1_cognitive", {}).get("data", {})
-                moca = float(moca_data.get("moca_score", patient.get("cognitive_score", patient.get("moca_score", 30.0))))
+                moca = float(moca_data.get("moca_score", patient.get("cognitive", {}).get("moca_score", patient.get("cognitive_score", patient.get("moca_score", 30.0)))))
                 
                 tau_data = stages.get("2_blood_biomarker", {}).get("data", {})
-                ptau = float(tau_data.get("p_tau181_pg_ml", tau_data.get("ptau_level", patient.get("ptau", 0.0))))
+                ptau = float(tau_data.get("p_tau181_pg_ml", patient.get("biomarkers", {}).get("ptau_181", patient.get("ptau_level", patient.get("ptau", 0.0)))))
                 
                 age = float(patient.get("demographics", {}).get("age", patient.get("age", 65.0)))
 
