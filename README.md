@@ -1,126 +1,623 @@
-# CogniPath-BuildSprint26
+CogniPath-BuildSprint26
 
-# CogniPath 🧠
-**[🎥 Watch the 2-Minute Demo Video Here](https://drive.google.com/file/d/1FEihsLXOR0s_0tLWiyZHLGLgJ-80eOqT/view?usp=sharing)** | **[🌍 Live Deployed Frontend](https://sohaam007.github.io/CogniPath-BuildSprint26/frontend/index.html)**
+CogniPath 🧠
 
-**AI-Driven Multimodal Triage Engine for Cognitive Health & Neurodegenerative Risk Stratification**
+"🎥 Watch the 2-Minute Demo Video" (https://drive.google.com/file/d/1FEihsLXOR0s_0tLWiyZHLGLgJ-80eOqT/view?usp=sharing) | "🌍 Live Deployed Frontend" (https://sohaam007.github.io/CogniPath-BuildSprint26/frontend/index.html) | "💻 GitHub Repository" (https://github.com/Sohaam007/CogniPath-BuildSprint26)
 
-CogniPath bridges the critical gap between patient self-reporting and clinical decision-making. By analyzing multimodal inputs—like cognitive assessments and blood biomarkers—CogniPath accelerates early intervention for Alzheimer's and progressive cognitive decline.
+«AI-Driven Multimodal Triage Engine for Cognitive Health & Neurodegenerative Risk Stratification»
 
----
-
-## 📖 The Problem Statement: A Story of Delayed Cognitive Intervention
-
-Imagine Eleanor, a 68-year-old retired teacher experiencing subtle memory lapses. She misplaces her keys daily, struggles to follow complex conversations, and feels increasingly disoriented during routine errands. Her family suspects early-stage Alzheimer's disease and requests a specialist evaluation.
-
-When her primary care physician submits a referral to a regional neurology clinic, Eleanor enters a broken triage pipeline:
-
-1. **The Waitlist Bottleneck:** Specialist clinics face overwhelming referral volumes, resulting in wait times of **6 to 9 months** for initial cognitive consultations.
-2. **Subjective & Fragmented Data:** Referrals rely heavily on paper self-reporting or single-dimensional cognitive tests (like basic MMSE scores), omitting critical biological indicators.
-3. **Delayed Diagnostic Windows:** Disease-modifying Alzheimer's therapies are exponentially more effective during preclinical or Mild Cognitive Impairment (MCI) stages. By the time Eleanor finally sees a neurologist, valuable therapeutic intervention windows have closed.
-
-### The CogniPath Solution
-CogniPath eliminates the specialist bottleneck by providing an instant, **multimodal AI triage layer**. By fusing patient self-reported cognitive scores (0–30) with objective blood biomarkers (such as p-tau181 and Amyloid-Beta ratios), CogniPath risk-stratifies incoming cases into **High**, **Moderate**, and **Low** urgency cohorts within milliseconds—ensuring critical patients like Eleanor are prioritized immediately.
+CogniPath bridges the gap between patient self-reporting and clinical decision-making. By combining multimodal inputs—including cognitive screening scores, demographic information, and blood biomarkers—CogniPath helps accelerate the prioritization of patients who may require earlier specialist evaluation.
 
 ---
 
-## Key Features
-* **Patient Intake Portal:** A secure, intuitive interface for patients or caregivers to submit demographic data, cognitive scores (0-30), and biomarker levels (e.g., p-tau181).
-* **Dynamic Patient Tracking:** Automatically generates unique, secure Patient IDs (e.g., `PT_LIVE_XXXX`) upon intake initiation to ensure anonymous triage tracking.
-* **Biomarker Data Integration Pipeline:** Connects incoming patient payloads with objective clinical biomarker data, pairing clinical assessments with biological ground truths.
-* **Clinician Triage Dashboard:** A specialized provider portal that ingests patient data and instantly applies risk stratification, categorizing cases into High, Moderate, and Low urgency, with real-time queues, biomarker vectors, and cohort statistics.
-* **Seamless SPA Architecture:** Built with a "Liquid Glass" UI, featuring instant state transitions between the landing page, intake modals, and the clinical dashboard without page reloads.
-* **Microsecond Profiling & Synthetic Cohort Benchmark:** Built-in benchmarking pipeline leveraging Python's `time.perf_counter` to profile triage latency against a synthetic 500+ patient cohort, ensuring sub-millisecond execution at scale.
+📖 The Problem: Delayed Cognitive Intervention
+
+Imagine Eleanor, a 68-year-old retired teacher experiencing subtle memory lapses. She misplaces her keys daily, struggles to follow complex conversations, and feels increasingly disoriented during routine errands. Her family requests a specialist evaluation.
+
+When her primary care physician submits a referral to a regional neurology clinic, Eleanor enters a fragmented triage pipeline:
+
+1. The Waitlist Bottleneck
+
+Specialist clinics can face overwhelming referral volumes, creating significant delays before patients receive an initial cognitive consultation.
+
+2. Subjective & Fragmented Data
+
+Traditional referrals may rely heavily on patient history and isolated cognitive scores while objective biological indicators remain disconnected from the initial prioritization process.
+
+3. Delayed Intervention
+
+Earlier identification and prioritization can help clinicians focus attention on patients who may require more urgent evaluation.
 
 ---
 
-## 📐 System Architecture
+💡 The CogniPath Solution
 
-CogniPath utilizes a decoupled client-server architecture designed for high availability and zero-latency UI transitions:
+CogniPath introduces an AI-powered multimodal triage layer between patient intake and specialist evaluation.
 
-```text
-  +-------------------------------------------------------------------+
-  |                   LIQUID GLASS FRONTEND (SPA)                     |
-  |  - HTML5, Tailwind CSS, Vanilla JavaScript (ES6+)                 |
-  |  - Patient Intake Portal (Dynamic PT_LIVE_XXXX tracking)          |
-  |  - Clinician Triage Dashboard (Risk Stratification Cockpit)       |
-  |  - Static Data Locking for Deterministic Clinical Demos           |
-  +---------------------------------+---------------------------------+
-                                    |
-                        REST API Payloads / JSON
-                                    |
-                                    v
-  +-------------------------------------------------------------------+
-  |                  FASTAPI BACKEND ENGINE (PORT 8000)               |
-  |  - Asynchronous Route Controller & CORS Middleware (main.py)      |
-  |  - Pydantic Schema Validation for Clinical Payloads               |
-  |  - Multimodal Risk Stratification & Scoring Algorithm             |
-  |  - Microsecond Latency Profiler & Synthetic Cohort Generator      |
-  +-------------------------------------------------------------------+
-```
+The platform combines:
 
-## 🛠️ Tech Stack
-* **Frontend:** HTML5, Vanilla JavaScript (ES6+), CSS3 / Tailwind CSS (Liquid Glass UI design)
-* **Backend Engine:** Python 3.11, FastAPI, Uvicorn, Pydantic
-* **Benchmarking & Data:** JSON Synthetic Patient Cohort, Python unittest suite, microsecond `time.perf_counter` profiler
-* **State Management:** Client-side DOM manipulation and static data locking for stable, deterministic clinical demonstrations
+- 🧠 Cognitive screening scores
+- 🧬 Blood-based biomarkers such as p-tau181
+- 👤 Patient demographic information
+- 📊 AI-driven risk scoring
+- ⚡ High-performance patient ranking
+
+CogniPath categorizes incoming cases into:
+
+🔴 HIGH → 🟠 MODERATE → 🟢 LOW
+
+This allows clinicians to quickly identify higher-priority cases instead of manually reviewing every referral with equal urgency.
+
+«CogniPath is a triage and prioritization prototype—not a diagnostic system. Final clinical decisions remain with qualified healthcare professionals.»
 
 ---
 
-## 🔌 API Credentials & Safety (Zero-Leak Security)
-To ensure absolute security when pushing codebase assets to GitHub:
-* **No hardcoded secrets:** All API endpoints, gateway routes, and backend variables read from local configuration or environment variables.
-* **Deterministic Fallback:** If offline or detached from backend servers, the frontend UI gracefully falls back to deterministic static data locking to guarantee uninterrupted demonstration during judging.
+🚀 Key Features
+
+🧑‍⚕️ Patient Intake Portal
+
+A simple interface for patients or caregivers to submit relevant intake information, including:
+
+- Age
+- Cognitive screening score (0–30)
+- Blood biomarker information
+- Patient/caregiver information
+- Clinical assessment inputs
+
+The interface is designed to keep the intake process simple while collecting the multimodal information required by the triage pipeline.
 
 ---
 
-## Getting Started
+🆔 Dynamic Patient Tracking
 
-### Testing the Frontend UI Locally
-1. Clone this repository to your local machine:
-```bash
-   git clone https://github.com/Sohaam007/CogniPath-BuildSprint26.git
-   cd CogniPath-BuildSprint26
-```
-2. Open the `frontend/index.html` file directly in any modern web browser.
-3. Click **Access Patient Intake**, generate a dynamic ID (e.g., `PT_LIVE_9021`), fill out the mock clinical data (e.g., Age: 68, MMSE Score: 18/30, p-tau181 level: 2.4 pg/mL), and submit.
-4. From the landing page, select a medical center from the dropdown, enter a mock Doctor ID (e.g., `DOC_77`) under the **Clinician Portal**, and log in to view the stabilized risk stratification dashboard.
+CogniPath generates a unique demonstration Patient ID such as:
 
-### ⚙️ Running the AI Triage Backend
-To execute the FastAPI server and explore interactive API documentation:
-1. Ensure Python 3.11+ is installed.
-2. Install dependencies:
-```bash
-   pip install -r requirements.txt
-```
-3. Boot up the server:
-```bash
-   uvicorn api.main:app --reload
-```
-   (Adjust `api.main:app` if your entry point script is located in a different directory.)
-4. Access interactive Swagger API documentation at: `http://localhost:8000/docs`
+PT_LIVE_9021
+
+The identifier allows cases to be tracked through the triage workflow without unnecessarily exposing personal information in the clinician queue.
+
+«Note: These identifiers are used for application-level tracking and should not be interpreted as cryptographic hashes or production-grade patient identifiers.»
 
 ---
 
-## 🌌 Interactive Walkthrough Checklist for Judges
-Follow this sequence to test the complete end-to-end triage flow:
-1. **Access the Live Portal:** Open the [Live Deployed Frontend](https://sohaam007.github.io/CogniPath-BuildSprint26/frontend/index.html) in your browser.
-2. **Initiate Patient Intake:** Click **Access Patient Intake**, then click **Generate ID** to produce a secure patient hash (e.g., `PT_LIVE_9021`).
-3. **Submit Clinical Symptoms:** Enter mock patient data (e.g., Age: 68, MMSE Score: 18/30, p-tau181 level: 2.4 pg/mL) and click **Submit Assessment**.
-4. **Log in to Clinician Portal:** Return to the main portal, select a medical center from the dropdown, enter a mock Doctor ID (e.g., `DOC_77`), and click **Login as Clinician**.
-5. **Inspect Stratified Triage:** View the Clinician Dashboard to see the real-time risk stratification matrix, dynamic cohort statistics, and prioritized patient queues.
+🧬 Biomarker Integration Pipeline
+
+CogniPath supports multimodal clinical inputs by combining cognitive information with objective biomarker data such as:
+
+p-tau181
+Amyloid-Beta related biomarkers
+
+The architecture is designed so additional biomarkers can be incorporated into the scoring pipeline as the system evolves.
 
 ---
 
-## 🖼️ Interface Showcase
+🧠 AI Risk Stratification
 
-### Landing Page & Patient Intake
-![CogniPath Landing Page](images/Landing-page.png)
+The backend applies the project's configurable risk-scoring logic to incoming patient data and categorizes cases into:
 
-![Patient Intake Modal](images/patient-modal.png)
+Risk Tier| Priority
+🔴 HIGH| Immediate clinical review priority
+🟠 MODERATE| Earlier specialist review
+🟢 LOW| Routine review / monitoring
 
-### Clinician Triage Dashboard
-![Clinician Dashboard](images/Dashboard.png)
+The system is designed to assist with prioritization, not autonomous diagnosis.
 
 ---
-*Built by Team Code Blue for fast, reliable healthcare triage during BuildSprint 2026.*
+
+👨‍⚕️ Clinician Triage Dashboard
+
+The clinician portal provides a centralized view of incoming cases, including:
+
+- Patient priority queue
+- Risk tier
+- Risk score
+- Cognitive score
+- Biomarker values
+- Cohort statistics
+- Explainability indicators
+- Prioritized patient ranking
+
+The dashboard allows clinicians to quickly identify higher-priority cases within the incoming cohort.
+
+---
+
+⚡ Hybrid C/Python Triage Engine
+
+CogniPath uses a hybrid architecture combining Python and native C.
+
+The high-performance ranking component:
+
+ranker.c
+
+is compiled as a native library and accessed from Python using:
+
+ctypes
+
+The architecture also includes a Python sorting fallback to maintain system stability if the native C engine cannot be loaded.
+
+Python FastAPI
+      ↓
+   AI Scoring
+      ↓
+    ctypes
+      ↓
+Native C Ranking Engine
+      ↓
+Prioritized Patient Queue
+
+This demonstrates the integration of high-level Python orchestration with a lower-level native C performance component.
+
+---
+
+📈 Synthetic Cohort Benchmarking
+
+CogniPath includes a synthetic patient cohort for performance testing.
+
+The benchmarking pipeline uses:
+
+time.perf_counter()
+
+to measure ranking and triage execution latency across synthetic patient cohorts.
+
+The project includes a 500+ patient synthetic dataset for testing and demonstration.
+
+«Benchmark results depend on the execution environment and should not be interpreted as production clinical performance guarantees.»
+
+---
+
+🖥️ Seamless SPA Architecture
+
+The frontend uses a single-page application approach built with:
+
+- HTML5
+- Vanilla JavaScript (ES6+)
+- Tailwind CSS
+- Client-side state management
+- Liquid Glass UI
+
+Patient intake, clinician portal screens, dashboards, and modals transition within the application without unnecessary page reloads.
+
+---
+
+📐 System Architecture
+
+CogniPath follows a decoupled client-server architecture combining a lightweight web frontend, FastAPI orchestration layer, AI scoring logic, and a native C ranking engine.
+
+┌─────────────────────────────────────────────────────────────────────┐
+│                     LIQUID GLASS FRONTEND                          │
+│                                                                     │
+│  HTML5 + Tailwind CSS + Vanilla JavaScript (ES6+)                  │
+│                                                                     │
+│  • Landing Page                                                     │
+│  • Patient Intake Portal                                            │
+│  • Dynamic PT_LIVE_XXXX Tracking                                    │
+│  • Clinician Portal                                                 │
+│  • Risk Stratification Dashboard                                    │
+│  • Cohort Statistics                                                │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               │ REST API / JSON
+                               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                       FASTAPI BACKEND                               │
+│                                                                     │
+│  • FastAPI                                                         │
+│  • Uvicorn                                                         │
+│  • Pydantic Validation                                              │
+│  • CORS Middleware                                                  │
+│  • AI Risk Scoring                                                  │
+│  • Python ctypes Bridge                                             │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               │ ctypes
+                               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    NATIVE C RANKING CORE                            │
+│                                                                     │
+│  ranker.c                                                           │
+│                                                                     │
+│  • High-performance patient ranking                                 │
+│  • Native execution                                                 │
+│  • ML scoring integration                                           │
+│  • Python sorting fallback                                          │
+└──────────────────────────────┬──────────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     PRIORITIZED TRIAGE QUEUE                        │
+│                                                                     │
+│                  HIGH → MODERATE → LOW                              │
+└─────────────────────────────────────────────────────────────────────┘
+
+---
+
+🛠️ Tech Stack
+
+Frontend
+
+- HTML5
+- CSS3
+- Tailwind CSS
+- Vanilla JavaScript (ES6+)
+- Liquid Glass UI
+- Client-side state management
+
+Backend
+
+- Python 3.11+
+- FastAPI
+- Uvicorn
+- Pydantic
+- Python "ctypes"
+
+AI / Risk Scoring
+
+- Multimodal clinical feature processing
+- Configurable scoring weights
+- Risk tier classification
+- Explainability indicators
+
+High-Performance Computing
+
+- C
+- Native ranking engine ("ranker.c")
+- Python "ctypes" integration
+- Python sorting fallback
+
+Data & Benchmarking
+
+- Synthetic patient cohort
+- JSON-based data pipeline
+- Python "unittest"
+- "time.perf_counter()" latency profiling
+- 500+ synthetic patient benchmark cohort
+
+---
+
+🔌 API Configuration & Security
+
+CogniPath is designed to avoid exposing sensitive credentials in the public repository.
+
+🔐 No Hardcoded Secrets
+
+API configuration, backend routes, and environment-specific variables should be supplied through configuration or environment variables rather than hardcoded secrets.
+
+No private API keys, authentication tokens, or other sensitive credentials should be committed to the repository.
+
+🛡️ Deterministic Demonstration Fallback
+
+When the backend is unavailable or disconnected, the frontend can fall back to deterministic demonstration data.
+
+This allows the core user journey to remain demonstrable during hackathon judging.
+
+«The fallback is intended for demonstration resilience and does not represent a production clinical data source.»
+
+---
+
+📁 Project Structure
+
+CogniPath-BuildSprint26/
+│
+├── api/
+│   └── main.py
+│
+├── frontend/
+│   └── index.html
+│
+├── models/
+│   └── scoring_config.json
+│
+├── ranker/
+│   ├── ranker.c
+│   └── ...
+│
+├── data/
+│   └── mock_cohort.json
+│
+├── tests/
+│   └── ...
+│
+├── generate_synthetic.py
+├── requirements.txt
+└── README.md
+
+«File locations may vary slightly depending on the current repository build.»
+
+---
+
+🚀 Getting Started
+
+1. Clone the Repository
+
+git clone https://github.com/Sohaam007/CogniPath-BuildSprint26.git
+cd CogniPath-BuildSprint26
+
+---
+
+🌐 Testing the Frontend
+
+🌍 Live Deployment
+
+The latest deployed frontend is available here:
+
+"🚀 Open CogniPath Live Frontend" (https://sohaam007.github.io/CogniPath-BuildSprint26/frontend/index.html)
+
+You can also run the frontend locally.
+
+Option 1 — Open Directly
+
+Open:
+
+frontend/index.html
+
+in a modern web browser.
+
+Option 2 — Run Through a Local Server
+
+From the project root:
+
+python -m http.server 5500
+
+Then open:
+
+http://localhost:5500/frontend/
+
+---
+
+⚙️ Running the AI Triage Backend
+
+Ensure that Python 3.11+ is installed.
+
+Install Dependencies
+
+pip install -r requirements.txt
+
+Start FastAPI
+
+uvicorn api.main:app --reload
+
+The backend will normally run at:
+
+http://localhost:8000
+
+Interactive API Documentation
+
+Open:
+
+http://localhost:8000/docs
+
+This provides FastAPI's Swagger interface for inspecting and testing the available endpoints.
+
+---
+
+🔬 C Ranking Engine
+
+CogniPath includes a native C ranking engine accessed through Python "ctypes".
+
+The high-level architecture is:
+
+FastAPI
+   │
+   ▼
+Python Risk Scoring Layer
+   │
+   ▼
+  ctypes
+   │
+   ▼
+ranker.c
+   │
+   ▼
+Prioritized Patient Ranking
+
+If the native C engine cannot be loaded, the backend can use the Python sorting implementation as a fallback.
+
+This hybrid design demonstrates how Python can be combined with lower-level native code for performance-sensitive components.
+
+---
+
+🧪 Synthetic Cohort Benchmark
+
+CogniPath includes a synthetic cohort generation and benchmarking pipeline.
+
+The synthetic dataset can be generated using:
+
+python generate_synthetic.py
+
+The benchmark pipeline can be used to evaluate:
+
+- Risk scoring
+- Patient ranking
+- Queue generation
+- Native C engine performance
+- Python fallback performance
+
+Latency measurements use:
+
+time.perf_counter()
+
+to provide high-resolution execution timing during development and demonstrations.
+
+---
+
+🌌 Interactive Walkthrough for Judges
+
+Follow this sequence to experience the complete CogniPath workflow.
+
+Step 1 — Open the Live Portal
+
+Open the deployed application:
+
+"🌍 CogniPath Live Frontend" (https://sohaam007.github.io/CogniPath-BuildSprint26/frontend/index.html)
+
+---
+
+Step 2 — Start Patient Intake
+
+Click:
+
+Access Patient Intake
+
+Then select:
+
+Generate ID
+
+A unique demonstration identifier will be generated, for example:
+
+PT_LIVE_9021
+
+---
+
+Step 3 — Submit Clinical Information
+
+Enter example demonstration data such as:
+
+Age: 68
+Cognitive Score: 18 / 30
+p-tau181: 2.4 pg/mL
+
+Then click:
+
+Submit Assessment
+
+---
+
+Step 4 — Open the Clinician Portal
+
+Return to the main portal.
+
+Select a medical center and enter the demonstration clinician ID:
+
+DOC_77
+
+Then select:
+
+Login as Clinician
+
+---
+
+Step 5 — Inspect the Triage Dashboard
+
+The clinician dashboard displays:
+
+- Patient priority queue
+- Risk stratification
+- Risk scores
+- Cognitive scores
+- Biomarker vectors
+- Cohort statistics
+- Explainability indicators
+
+Higher-priority cases are surfaced first for clinician review.
+
+---
+
+🧠 Clinical Safety & Scope
+
+CogniPath is designed as a clinical triage and prioritization prototype.
+
+CogniPath Does Not:
+
+- Diagnose Alzheimer's disease
+- Replace a neurologist or physician
+- Provide definitive treatment recommendations
+- Replace validated clinical assessments
+- Guarantee individual patient outcomes
+
+The AI output is intended to help healthcare professionals prioritize cases for further evaluation.
+
+All clinical decisions should remain under the supervision of qualified healthcare professionals.
+
+«CogniPath is a prototype developed for the BuildSprint 2026 hackathon and is not intended for direct clinical deployment.»
+
+---
+
+🖼️ Interface Showcase
+
+🏠 Landing Page
+
+"CogniPath Landing Page" (images/Landing-page.png)
+
+---
+
+🧑‍⚕️ Patient Intake Portal
+
+"CogniPath Patient Intake Modal" (images/patient-modal.png)
+
+---
+
+📊 Clinician Triage Dashboard
+
+"CogniPath Clinician Dashboard" (images/Dashboard.png)
+
+---
+
+🎥 Demo
+
+2-Minute Product Demonstration
+
+"▶️ Watch the CogniPath Demo Video" (https://drive.google.com/file/d/1FEihsLXOR0s_0tLWiyZHLGLgJ-80eOqT/view?usp=sharing)
+
+The demonstration showcases the complete workflow:
+
+Patient Intake
+      ↓
+Dynamic Patient ID
+      ↓
+Clinical + Biomarker Data
+      ↓
+AI Risk Scoring
+      ↓
+C / Python Ranking Engine
+      ↓
+Prioritized Clinician Queue
+
+---
+
+🌍 Live Application
+
+🚀 Try CogniPath
+
+"Open the Live Frontend" (https://sohaam007.github.io/CogniPath-BuildSprint26/frontend/index.html)
+
+💻 Source Code
+
+"View the GitHub Repository" (https://github.com/Sohaam007/CogniPath-BuildSprint26)
+
+🎥 Product Demo
+
+"Watch the 2-Minute Demo" (https://drive.google.com/file/d/1FEihsLXOR0s_0tLWiyZHLGLgJ-80eOqT/view?usp=sharing)
+
+---
+
+🏆 Built for BuildSprint 2026
+
+CogniPath was built by Team Code Blue for BuildSprint 2026.
+
+Our goal is simple:
+
+«Turn fragmented cognitive-health referrals into an intelligent, multimodal priority queue—so clinicians can focus attention where it matters most.»
+
+---
+
+👥 Team Code Blue
+
+CogniPath
+
+AI-Driven Multimodal Triage for Cognitive Health
+
+Built with:
+
+Python
++
+FastAPI
++
+AI/ML
++
+C
++
+ctypes
++
+JavaScript
+
+Built by Team Code Blue for fast, reliable healthcare triage during BuildSprint 2026.
