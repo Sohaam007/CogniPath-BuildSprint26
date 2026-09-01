@@ -268,6 +268,7 @@ The AI output is intended to help healthcare professionals prioritize cases for 
 
 🎥 Demo & Links
 ▶️ Watch the 2-Minute Product Demonstration
+```text
 The demo showcases the complete workflow:
 Patient Intake
       ↓
@@ -280,6 +281,8 @@ AI Risk Scoring
 C / Python Ranking Engine
       ↓
 Prioritized Clinician Queue
+
+```
 
 🌍 Live Application: 🚀 Open the Live Frontend
 💻 Source Code: View the GitHub Repository
