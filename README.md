@@ -291,7 +291,10 @@ CogniPath was built by Team Code Blue for BuildSprint 2026.
 Our goal is simple:
 > Turn fragmented cognitive-health referrals into an intelligent, multimodal priority queue—so clinicians can focus attention where it matters most.
 > 
-Team Code Blue
+Team Code Blue!
+```text
 Built with: Python + FastAPI + AI/ML + C + ctypes + JavaScript
-Built by Team Code Blue for fast, reliable healthcare triage during BuildSprint 2026.
+```
+
+Built by Team Code Blue! for fast,reliable healthcare triage during BuildSprint 2026.
 
