@@ -152,7 +152,7 @@ CogniPath follows a decoupled client-server architecture combining a lightweight
 │                                                                     │
 │       HIGH  →  MODERATE  →  LOW                                     │
 └─────────────────────────────────────────────────────────────────────┘
-
+```
 🛠️ Tech Stack
 Frontend
  * HTML5, CSS3, Tailwind CSS, Vanilla JavaScript (ES6+)
@@ -174,6 +174,7 @@ CogniPath is designed to avoid exposing sensitive credentials in the public repo
 🛡️ Deterministic Fallback: When the backend is unavailable or disconnected, the frontend can fall back to deterministic demonstration data. This ensures that the core user journey remains demonstrable during hackathon judging.
 > The fallback is intended for demonstration resilience and does not represent a production clinical data source.
 > 
+```text
 📁 Project Structure
 CogniPath-BuildSprint26/
 │
@@ -199,7 +200,7 @@ CogniPath-BuildSprint26/
 ├── generate_synthetic.py
 ├── requirements.txt
 └── README.md
-
+```
 > File locations may vary slightly depending on the current repository build.
 > 
 🚀 Getting Started
@@ -226,8 +227,10 @@ uvicorn api.main:app --reload
 
 The backend will normally run at: http://localhost:8000
 Interactive API Documentation: Open http://localhost:8000/docs to use FastAPI's Swagger interface to inspect and test the available endpoints.
+
 🔬 C Ranking Engine
 The project includes a native C ranking engine used through Python ctypes. If the native engine cannot be loaded, the backend can use the Python sorting implementation as a fallback. This hybrid design demonstrates how Python can be combined with lower-level native code for performance-sensitive components.
+
 🧪 Synthetic Cohort Benchmark
 CogniPath includes a synthetic cohort generation and benchmarking pipeline.
 python generate_synthetic.py
@@ -251,8 +254,6 @@ It does not:
  * Replace validated clinical assessments
  * Guarantee individual patient outcomes
 The AI output is intended to help healthcare professionals prioritize cases for further evaluation. All clinical decisions should remain under the supervision of qualified healthcare professionals.
-
-```
 
 🖼️ Interface Showcase
 
