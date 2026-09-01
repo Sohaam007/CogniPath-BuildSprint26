@@ -252,7 +252,7 @@ It does not:
  * Guarantee individual patient outcomes
 The AI output is intended to help healthcare professionals prioritize cases for further evaluation. All clinical decisions should remain under the supervision of qualified healthcare professionals.
 
-```text
+```
 
 🖼️ Interface Showcase
 
